@@ -1,15 +1,378 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Website Saya</title>
-  <style>
-    body { font-family: sans-serif; max-width: 600px; margin: 4rem auto; padding: 0 1rem; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kelola Barang</title>
+<style>
+  :root{
+    --bg:#f5f6f8; --card:#ffffff; --text:#1c2230; --muted:#6b7385; --line:#e3e6ec;
+    --accent:#2f6fed; --accent-text:#ffffff; --ok:#1f9d57; --warn:#d98a00; --bad:#d6403a;
+    --ok-bg:#e3f6ec; --warn-bg:#fff3d9; --bad-bg:#fde7e6;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0f1218; --card:#181c25; --text:#e8ebf2; --muted:#8c94a8; --line:#272d3a;
+      --accent:#5b8cff; --accent-text:#0b1020; --ok:#3ccf82; --warn:#f0b13a; --bad:#ff6b64;
+      --ok-bg:#12301f; --warn-bg:#35280d; --bad-bg:#3a1816;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:860px;margin:0 auto;padding:16px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+  h1{font-size:1.4rem;margin:0}
+  button,input,select,textarea{font:inherit;color:inherit}
+  button{cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:8px;padding:8px 12px}
+  button:hover{border-color:var(--accent)}
+  button.primary{background:var(--accent);color:var(--accent-text);border-color:var(--accent);font-weight:600}
+  button.danger{color:var(--bad)}
+  button.small{padding:4px 10px;font-size:.88rem}
+  .tools{display:flex;gap:8px;flex-wrap:wrap}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .stat b{display:block;font-size:1.5rem}
+  .stat span{color:var(--muted);font-size:.85rem}
+  nav{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:14px}
+  nav button{border:0;border-bottom:3px solid transparent;border-radius:0;background:none;padding:10px 14px;color:var(--muted);font-weight:600}
+  nav button.active{color:var(--accent);border-bottom-color:var(--accent)}
+  .bar{display:flex;gap:8px;margin-bottom:12px}
+  .bar input{flex:1;min-width:0}
+  input[type=text],input[type=number],input[type=date],input[type=time],select,textarea{
+    width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+  textarea{min-height:70px;resize:vertical}
+  .item{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+  .item.done .title{text-decoration:line-through;color:var(--muted)}
+  .info{flex:1;min-width:180px}
+  .title{font-weight:600}
+  .meta{color:var(--muted);font-size:.88rem}
+  .actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .qty{font-weight:700;min-width:70px;text-align:center}
+  .badge{display:inline-block;font-size:.75rem;font-weight:600;padding:2px 8px;border-radius:999px;margin-left:6px;vertical-align:middle}
+  .badge.ok{background:var(--ok-bg);color:var(--ok)}
+  .badge.warn{background:var(--warn-bg);color:var(--warn)}
+  .badge.bad{background:var(--bad-bg);color:var(--bad)}
+  .progress{width:100%}
+  .track{height:10px;background:var(--line);border-radius:999px;overflow:hidden;margin:8px 0 4px}
+  .fill{height:100%;background:var(--accent);border-radius:999px;transition:width .2s}
+  .fill.full{background:var(--ok)}
+  input[type=range]{width:100%;accent-color:var(--accent)}
+  input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent)}
+  .empty{text-align:center;color:var(--muted);padding:32px 12px;border:1px dashed var(--line);border-radius:12px}
+  dialog{border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--text);padding:18px;width:min(460px,92vw)}
+  dialog::backdrop{background:rgba(0,0,0,.45)}
+  dialog h2{margin:0 0 12px;font-size:1.1rem}
+  .field{margin-bottom:10px}
+  .field label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:3px}
+  .row{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+  footer{color:var(--muted);font-size:.8rem;margin-top:22px;text-align:center}
+  .hidden{display:none}
+</style>
 </head>
 <body>
-  <h1>Halo, dunia!</h1>
-  <p>Ini website pertamaku.</p>
+<div class="wrap">
+  <header>
+    <h1>📦 Kelola Barang</h1>
+    <div class="tools">
+      <button id="exportBtn" class="small">Ekspor cadangan</button>
+      <button id="importBtn" class="small">Impor cadangan</button>
+      <input type="file" id="importFile" accept="application/json" class="hidden">
+    </div>
+  </header>
+
+  <section class="cards" id="summary"></section>
+
+  <nav id="tabs">
+    <button data-tab="stok" class="active">Stok</button>
+    <button data-tab="jadwal">Jadwal</button>
+    <button data-tab="progres">Progres</button>
+  </nav>
+
+  <div class="bar">
+    <input type="text" id="search" placeholder="Cari nama, kategori, atau lokasi…">
+    <button id="addBtn" class="primary">+ Tambah</button>
+  </div>
+
+  <div id="list"></div>
+
+  <footer>Data tersimpan di browser perangkat ini. Gunakan "Ekspor cadangan" secara berkala agar data aman dan bisa dipindah ke perangkat lain.</footer>
+</div>
+
+<dialog id="dlg">
+  <form id="form">
+    <h2 id="dlgTitle"></h2>
+    <div id="fields"></div>
+    <div class="row">
+      <button type="button" id="cancelBtn">Batal</button>
+      <button type="submit" class="primary">Simpan</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+(function(){
+  const KEY = 'kelola-barang-v1';
+  const $ = s => document.querySelector(s);
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const today = () => new Date().toLocaleDateString('sv-SE');
+  const fmtDate = d => d ? new Date(d + 'T00:00:00').toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'numeric'}) : '';
+
+  let db = load();
+  let tab = 'stok';
+  let editing = null; // {type, id}
+
+  function load(){
+    try {
+      const d = JSON.parse(localStorage.getItem(KEY));
+      if (d && Array.isArray(d.stok) && Array.isArray(d.jadwal) && Array.isArray(d.progres)) return d;
+    } catch (e) {}
+    return {stok: [], jadwal: [], progres: []};
+  }
+  function save(){
+    try { localStorage.setItem(KEY, JSON.stringify(db)); }
+    catch (e) { alert('Data tidak bisa disimpan di browser ini. Coba ekspor cadangan.'); }
+  }
+
+  const schema = {
+    stok: {
+      title: 'barang',
+      fields: [
+        {k:'nama', l:'Nama barang', t:'text', req:true},
+        {k:'kategori', l:'Kategori', t:'text'},
+        {k:'jumlah', l:'Jumlah', t:'number', req:true, def:0},
+        {k:'satuan', l:'Satuan', t:'text', def:'pcs'},
+        {k:'min', l:'Batas stok menipis', t:'number', def:0},
+        {k:'lokasi', l:'Lokasi penyimpanan', t:'text'}
+      ]
+    },
+    jadwal: {
+      title: 'jadwal',
+      fields: [
+        {k:'judul', l:'Judul kegiatan', t:'text', req:true},
+        {k:'tanggal', l:'Tanggal', t:'date', req:true, def:null},
+        {k:'waktu', l:'Waktu', t:'time'},
+        {k:'barang', l:'Barang terkait', t:'text'},
+        {k:'catatan', l:'Catatan', t:'textarea'}
+      ]
+    },
+    progres: {
+      title: 'progres',
+      fields: [
+        {k:'nama', l:'Nama tugas / proyek', t:'text', req:true},
+        {k:'persen', l:'Progres (%)', t:'number', def:0},
+        {k:'tenggat', l:'Tenggat', t:'date'},
+        {k:'catatan', l:'Catatan', t:'textarea'}
+      ]
+    }
+  };
+
+  /* ---------- Ringkasan ---------- */
+  function renderSummary(){
+    const low = db.stok.filter(i => isLow(i)).length;
+    const t = today();
+    const upcoming = db.jadwal.filter(j => !j.selesai && j.tanggal >= t).length;
+    const late = db.jadwal.filter(j => !j.selesai && j.tanggal < t).length;
+    const avg = db.progres.length ? Math.round(db.progres.reduce((a, p) => a + (Number(p.persen) || 0), 0) / db.progres.length) : 0;
+    $('#summary').innerHTML =
+      stat(db.stok.length, 'Jenis barang') +
+      stat(low, 'Stok menipis') +
+      stat(upcoming + (late ? ' (+' + late + ' lewat)' : ''), 'Jadwal aktif') +
+      stat(avg + '%', 'Rata-rata progres');
+  }
+  const stat = (n, l) => '<div class="stat"><b>' + esc(n) + '</b><span>' + l + '</span></div>';
+  const isLow = i => Number(i.jumlah) <= 0 || (Number(i.min) > 0 && Number(i.jumlah) <= Number(i.min));
+
+  /* ---------- Daftar ---------- */
+  const empty = msg => '<div class="empty">' + msg + '</div>';
+
+  const views = {
+    stok(){
+      const q = $('#search').value.trim().toLowerCase();
+      const items = db.stok
+        .filter(i => !q || [i.nama, i.kategori, i.lokasi].join(' ').toLowerCase().includes(q))
+        .sort((a, b) => String(a.nama).localeCompare(String(b.nama)));
+      if (!items.length) return empty(db.stok.length ? 'Tidak ada barang yang cocok.' : 'Belum ada barang. Klik "+ Tambah" untuk mulai.');
+      return items.map(i => {
+        const out = Number(i.jumlah) <= 0;
+        const badge = out ? '<span class="badge bad">Habis</span>' : isLow(i) ? '<span class="badge warn">Menipis</span>' : '<span class="badge ok">Aman</span>';
+        const meta = [i.kategori, i.lokasi ? '📍 ' + i.lokasi : '', Number(i.min) > 0 ? 'batas: ' + i.min : ''].filter(Boolean).map(esc).join(' · ');
+        return '<div class="item">' +
+          '<div class="info"><div class="title">' + esc(i.nama) + badge + '</div><div class="meta">' + meta + '</div></div>' +
+          '<div class="actions">' +
+            '<button class="small" data-act="dec" data-id="' + i.id + '" aria-label="Kurangi">−</button>' +
+            '<span class="qty">' + esc(i.jumlah) + ' ' + esc(i.satuan) + '</span>' +
+            '<button class="small" data-act="inc" data-id="' + i.id + '" aria-label="Tambah">+</button>' +
+            '<button class="small" data-act="edit" data-id="' + i.id + '">Ubah</button>' +
+            '<button class="small danger" data-act="del" data-id="' + i.id + '">Hapus</button>' +
+          '</div></div>';
+      }).join('');
+    },
+    jadwal(){
+      const q = $('#search').value.trim().toLowerCase();
+      const t = today();
+      const items = db.jadwal
+        .filter(j => !q || [j.judul, j.barang, j.catatan].join(' ').toLowerCase().includes(q))
+        .sort((a, b) => (a.selesai - b.selesai) || (a.tanggal + (a.waktu || '')).localeCompare(b.tanggal + (b.waktu || '')));
+      if (!items.length) return empty(db.jadwal.length ? 'Tidak ada jadwal yang cocok.' : 'Belum ada jadwal. Klik "+ Tambah" untuk membuat.');
+      return items.map(j => {
+        let badge = '';
+        if (!j.selesai) {
+          if (j.tanggal < t) badge = '<span class="badge bad">Terlewat</span>';
+          else if (j.tanggal === t) badge = '<span class="badge warn">Hari ini</span>';
+        } else badge = '<span class="badge ok">Selesai</span>';
+        const meta = [fmtDate(j.tanggal) + (j.waktu ? ', ' + j.waktu : ''), j.barang ? '📦 ' + j.barang : '', j.catatan].filter(Boolean).map(esc).join(' · ');
+        return '<div class="item' + (j.selesai ? ' done' : '') + '">' +
+          '<input type="checkbox" data-act="done" data-id="' + j.id + '"' + (j.selesai ? ' checked' : '') + ' aria-label="Tandai selesai">' +
+          '<div class="info"><div class="title">' + esc(j.judul) + badge + '</div><div class="meta">' + meta + '</div></div>' +
+          '<div class="actions">' +
+            '<button class="small" data-act="edit" data-id="' + j.id + '">Ubah</button>' +
+            '<button class="small danger" data-act="del" data-id="' + j.id + '">Hapus</button>' +
+          '</div></div>';
+      }).join('');
+    },
+    progres(){
+      const q = $('#search').value.trim().toLowerCase();
+      const t = today();
+      const items = db.progres
+        .filter(p => !q || [p.nama, p.catatan].join(' ').toLowerCase().includes(q))
+        .sort((a, b) => (Number(a.persen) >= 100) - (Number(b.persen) >= 100) || String(a.tenggat || '9999').localeCompare(String(b.tenggat || '9999')));
+      if (!items.length) return empty(db.progres.length ? 'Tidak ada tugas yang cocok.' : 'Belum ada tugas. Klik "+ Tambah" untuk membuat.');
+      return items.map(p => {
+        const pct = Math.max(0, Math.min(100, Number(p.persen) || 0));
+        const status = pct >= 100 ? '<span class="badge ok">Selesai</span>' : pct > 0 ? '<span class="badge warn">Berjalan</span>' : '<span class="badge">Belum mulai</span>';
+        const late = p.tenggat && pct < 100 && p.tenggat < t ? '<span class="badge bad">Lewat tenggat</span>' : '';
+        const meta = [p.tenggat ? 'Tenggat ' + fmtDate(p.tenggat) : '', p.catatan].filter(Boolean).map(esc).join(' · ');
+        return '<div class="item"><div class="info progress">' +
+          '<div class="title">' + esc(p.nama) + status + late + '</div>' +
+          '<div class="meta">' + meta + '</div>' +
+          '<div class="track"><div class="fill' + (pct >= 100 ? ' full' : '') + '" style="width:' + pct + '%"></div></div>' +
+          '<div class="actions" style="justify-content:space-between">' +
+            '<span class="meta"><span data-pct-label="' + p.id + '">' + pct + '</span>%</span>' +
+            '<input type="range" min="0" max="100" step="5" value="' + pct + '" data-act="pct" data-id="' + p.id + '" style="flex:1;min-width:120px" aria-label="Atur progres">' +
+            '<button class="small" data-act="edit" data-id="' + p.id + '">Ubah</button>' +
+            '<button class="small danger" data-act="del" data-id="' + p.id + '">Hapus</button>' +
+          '</div></div></div>';
+      }).join('');
+    }
+  };
+
+  function render(){
+    document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+    $('#list').innerHTML = views[tab]();
+    renderSummary();
+  }
+
+  /* ---------- Aksi pada daftar ---------- */
+  $('#list').addEventListener('click', e => {
+    const b = e.target.closest('button[data-act]');
+    if (!b) return;
+    const id = b.dataset.id, act = b.dataset.act;
+    const item = db[tab].find(x => x.id === id);
+    if (!item) return;
+    if (act === 'edit') openForm(tab, id);
+    else if (act === 'del') {
+      if (confirm('Hapus data ini?')) { db[tab] = db[tab].filter(x => x.id !== id); save(); render(); }
+    }
+    else if (act === 'inc') { item.jumlah = (Number(item.jumlah) || 0) + 1; save(); render(); }
+    else if (act === 'dec') { item.jumlah = Math.max(0, (Number(item.jumlah) || 0) - 1); save(); render(); }
+  });
+  $('#list').addEventListener('input', e => {
+    const el = e.target;
+    if (el.dataset.act === 'pct') {
+      const label = document.querySelector('[data-pct-label="' + el.dataset.id + '"]');
+      if (label) label.textContent = el.value;
+    }
+  });
+  $('#list').addEventListener('change', e => {
+    const el = e.target, act = el.dataset.act;
+    if (!act) return;
+    const item = db[tab].find(x => x.id === el.dataset.id);
+    if (!item) return;
+    if (act === 'done') { item.selesai = el.checked; save(); render(); }
+    if (act === 'pct') { item.persen = Number(el.value); save(); render(); }
+  });
+
+  /* ---------- Form tambah / ubah ---------- */
+  function openForm(type, id){
+    editing = {type, id};
+    const sc = schema[type];
+    const data = id ? db[type].find(x => x.id === id) : {};
+    $('#dlgTitle').textContent = (id ? 'Ubah ' : 'Tambah ') + sc.title;
+    $('#fields').innerHTML = sc.fields.map(f => {
+      let v = data[f.k];
+      if (v === undefined) v = f.def === null ? today() : (f.def !== undefined ? f.def : '');
+      const attrs = 'name="' + f.k + '" id="f_' + f.k + '"' + (f.req ? ' required' : '');
+      let input;
+      if (f.t === 'textarea') input = '<textarea ' + attrs + '>' + esc(v) + '</textarea>';
+      else if (f.t === 'number') input = '<input type="number" step="any" min="0" ' + attrs + ' value="' + esc(v) + '">';
+      else input = '<input type="' + f.t + '" ' + attrs + ' value="' + esc(v) + '">';
+      return '<div class="field"><label for="f_' + f.k + '">' + f.l + '</label>' + input + '</div>';
+    }).join('');
+    $('#dlg').showModal();
+    const first = $('#fields input, #fields textarea');
+    if (first) first.focus();
+  }
+
+  $('#form').addEventListener('submit', e => {
+    e.preventDefault();
+    const {type, id} = editing;
+    const rec = id ? db[type].find(x => x.id === id) : {id: uid()};
+    schema[type].fields.forEach(f => {
+      let v = $('#f_' + f.k).value;
+      if (f.t === 'number') v = Math.max(0, Number(v) || 0);
+      else if (f.t !== 'textarea') v = v.trim();
+      rec[f.k] = v;
+    });
+    if (type === 'progres') rec.persen = Math.min(100, rec.persen);
+    if (type === 'jadwal' && rec.selesai === undefined) rec.selesai = false;
+    if (!id) db[type].push(rec);
+    save();
+    $('#dlg').close();
+    render();
+  });
+  $('#cancelBtn').addEventListener('click', () => $('#dlg').close());
+
+  /* ---------- Tab, cari, tambah ---------- */
+  $('#tabs').addEventListener('click', e => {
+    const b = e.target.closest('button[data-tab]');
+    if (!b) return;
+    tab = b.dataset.tab;
+    $('#search').value = '';
+    render();
+  });
+  $('#search').addEventListener('input', render);
+  $('#addBtn').addEventListener('click', () => openForm(tab));
+
+  /* ---------- Cadangan ---------- */
+  $('#exportBtn').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(db, null, 2)], {type: 'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'kelola-barang-' + today() + '.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
+  $('#importBtn').addEventListener('click', () => $('#importFile').click());
+  $('#importFile').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const d = JSON.parse(reader.result);
+        if (!d || !Array.isArray(d.stok) || !Array.isArray(d.jadwal) || !Array.isArray(d.progres)) throw new Error('format');
+        if (confirm('Ganti semua data saat ini dengan isi file cadangan?')) { db = d; save(); render(); }
+      } catch (err) { alert('File cadangan tidak valid.'); }
+      e.target.value = '';
+    };
+    reader.readAsText(file);
+  });
+
+  render();
+})();
+</script>
 </body>
 </html>
